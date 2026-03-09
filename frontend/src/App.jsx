@@ -4,12 +4,18 @@ import { ShieldCheck, Activity, AlertTriangle, Cpu } from "lucide-react";
 import SummaryCards from "./components/SummaryCards.jsx";
 import AlertPanel from "./alerts/AlertPanel.jsx";
 import LiveEventStream from "./alerts/LiveEventStream.jsx";
+import ThreatMonitor from "./alerts/ThreatMonitor.jsx";
 import ActivityChart from "./charts/ActivityChart.jsx";
 import IoTChart from "./charts/IoTChart.jsx";
 import TamperChart from "./charts/TamperChart.jsx";
+import AccessHourChart from "./charts/AccessHourChart.jsx";
+import TopIpChart from "./charts/TopIpChart.jsx";
+import SuspiciousAccessChart from "./charts/SuspiciousAccessChart.jsx";
 import StatusPanel from "./components/StatusPanel.jsx";
+import GeoDistribution from "./components/GeoDistribution.jsx";
 import LogsTable from "./tables/LogsTable.jsx";
 import IoTTable from "./tables/IoTTable.jsx";
+import AccessLogsTable from "./tables/AccessLogsTable.jsx";
 import AnomalyExplanation from "./components/AnomalyExplanation.jsx";
 
 const API_BASE = "http://127.0.0.1:5001/api";
@@ -21,7 +27,8 @@ export default function App() {
     total_iot: 0,
     anomalies: 0,
     active_alerts: 0,
-    connected_users: 0
+    connected_users: 0,
+    access_total: 0
   });
 
   const [alerts, setAlerts] = useState([]);
@@ -34,9 +41,14 @@ export default function App() {
   const [anomalies, setAnomalies] = useState([]);
   const [securityEvents, setSecurityEvents] = useState([]);
   const [userCount, setUserCount] = useState(0);
+  const [accessLogs, setAccessLogs] = useState([]);
+  const [accessHour, setAccessHour] = useState([]);
+  const [topIps, setTopIps] = useState([]);
+  const [accessSuspicious, setAccessSuspicious] = useState([]);
+  const [locations, setLocations] = useState([]);
 
   const fetchAll = async () => {
-    const [s, a, l, i, ac, ic, tc, st, an] = await Promise.all([
+    const [s, a, l, i, ac, ic, tc, st, an, al, ah, ti, as, loc] = await Promise.all([
       fetch(`${API_BASE}/summary`).then(r => r.json()),
       fetch(`${API_BASE}/alerts`).then(r => r.json()),
       fetch(`${API_BASE}/logs?limit=12`).then(r => r.json()),
@@ -45,7 +57,12 @@ export default function App() {
       fetch(`${API_BASE}/charts/iot`).then(r => r.json()),
       fetch(`${API_BASE}/charts/tamper`).then(r => r.json()),
       fetch(`${API_BASE}/system-status`).then(r => r.json()),
-      fetch(`${API_BASE}/anomalies?limit=5`).then(r => r.json())
+      fetch(`${API_BASE}/anomalies?limit=5`).then(r => r.json()),
+      fetch(`${API_BASE}/access-logs?limit=10`).then(r => r.json()),
+      fetch(`${API_BASE}/charts/access-hour`).then(r => r.json()),
+      fetch(`${API_BASE}/charts/access-top-ips`).then(r => r.json()),
+      fetch(`${API_BASE}/charts/access-suspicious`).then(r => r.json()),
+      fetch(`${API_BASE}/charts/access-locations`).then(r => r.json())
     ]);
 
     setSummary(s);
@@ -57,6 +74,11 @@ export default function App() {
     setTamperChart(tc);
     setStatus(st);
     setAnomalies(an);
+    setAccessLogs(al);
+    setAccessHour(ah);
+    setTopIps(ti);
+    setAccessSuspicious(as);
+    setLocations(loc);
     setUserCount(s.connected_users || 0);
   };
 
@@ -75,7 +97,7 @@ export default function App() {
     const socket = io(SOCKET_URL);
 
     socket.on("security_event", event => {
-      setSecurityEvents(prev => [event, ...prev].slice(0, 20));
+      setSecurityEvents(prev => [event, ...prev].slice(0, 30));
       fetchAll();
     });
 
@@ -86,6 +108,10 @@ export default function App() {
     return () => socket.disconnect();
   }, []);
 
+  const threatEvents = securityEvents.filter(ev =>
+    ["ACCESS_DETECTED", "SUSPICIOUS_ACCESS"].includes(ev.type)
+  );
+
   return (
     <div className="min-h-screen text-slate-100">
       <header className="px-8 py-6 flex items-center justify-between border-b border-slate-800/60">
@@ -95,10 +121,10 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              AI-Powered Tamper Detection & Security Monitoring
+              AI Powered Container Tamper Detection SOC Dashboard
             </h1>
             <p className="text-slate-400 text-sm">
-              SOC Dashboard • Real-time anomaly detection • IoT tamper intelligence
+              SOC Dashboard • Real-time anomaly detection • Container security intelligence
             </p>
           </div>
         </div>
@@ -151,10 +177,22 @@ export default function App() {
           </div>
           <div className="space-y-6">
             <AlertPanel alerts={alerts} />
+            <ThreatMonitor events={threatEvents} />
             <LiveEventStream events={securityEvents} />
             <StatusPanel status={status} />
             <AnomalyExplanation anomalies={anomalies} />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <AccessHourChart data={accessHour} />
+          <TopIpChart data={topIps} />
+          <SuspiciousAccessChart data={accessSuspicious} />
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <GeoDistribution locations={locations} />
+          <AccessLogsTable rows={accessLogs} />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

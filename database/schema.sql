@@ -35,3 +35,13 @@ CREATE TABLE IF NOT EXISTS alerts (
   alert_message TEXT NOT NULL,
   status TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS access_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp TEXT NOT NULL,
+  ip_address TEXT NOT NULL,
+  user_agent TEXT NOT NULL,
+  endpoint TEXT NOT NULL,
+  risk_score REAL NOT NULL,
+  location TEXT NOT NULL
+);
