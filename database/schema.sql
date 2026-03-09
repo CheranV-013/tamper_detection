@@ -1,0 +1,37 @@
+CREATE TABLE IF NOT EXISTS logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp TEXT NOT NULL,
+  user TEXT NOT NULL,
+  action TEXT NOT NULL,
+  resource TEXT NOT NULL,
+  status TEXT NOT NULL,
+  ip_address TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS iot_data (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp TEXT NOT NULL,
+  device_id TEXT NOT NULL,
+  temperature REAL NOT NULL,
+  vibration REAL NOT NULL,
+  motion INTEGER NOT NULL,
+  door TEXT NOT NULL,
+  power REAL NOT NULL,
+  tilt INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS anomalies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp TEXT NOT NULL,
+  source TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  anomaly_score REAL NOT NULL,
+  description TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS alerts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp TEXT NOT NULL,
+  alert_message TEXT NOT NULL,
+  status TEXT NOT NULL
+);

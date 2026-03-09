@@ -1,0 +1,39 @@
+# AI-Powered Tamper Detection and Security Monitoring Dashboard
+
+## Overview
+Full-stack SOC-style dashboard with simulated logs, IoT sensor telemetry, Isolation Forest anomaly detection, and real-time WebSocket alerts.
+
+## Project Structure
+- `backend/` Flask API + Socket.IO + ML pipeline
+- `frontend/` React + Tailwind dashboard
+- `database/` SQLite schema
+
+## Backend Setup
+```bash
+cd /Users/cheranv/Documents/iot_tamper/backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+The backend runs at `http://127.0.0.1:5001`.
+
+## Frontend Setup
+```bash
+cd /Users/cheranv/Documents/iot_tamper/frontend
+npm install
+npm run dev
+```
+
+## Real-Time Flow
+- WebSocket connects on page load
+- Server broadcasts `security_event` and `user_count`
+- UI updates instantly, no manual refresh
+
+## API
+- `POST /api/generate` to simulate events
+- `GET /api/summary`, `GET /api/logs`, `GET /api/iot`, `GET /api/anomalies`, `GET /api/alerts`
+- `GET /api/dashboard-access` to log dashboard access
+
+## Database
+SQLite file at `database/tamper.db` is created on first backend run.
