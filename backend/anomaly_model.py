@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import ipaddress
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
@@ -197,4 +198,99 @@ def detect_anomalies(conn, new_log_count=0, new_iot_count=0):
                             "timestamp": row["timestamp"],
                         }
                     )
+    return events
+
+
+def _access_features(access_df):
+    df = access_df.copy()
+    df["ts"] = _parse_ts(df)
+    df["access_hour"] = df["ts"].dt.hour.fillna(0).astype(int)
+
+    req_5m = []
+    req_60m = []
+    is_public = []
+    for _, row in df.iterrows():
+        if pd.isna(row["ts"]):
+            req_5m.append(0)
+            req_60m.append(0)
+            is_public.append(0)
+            continue
+        start_5 = row["ts"] - timedelta(minutes=5)
+        start_60 = row["ts"] - timedelta(minutes=60)
+        mask_ip = df["ip_address"] == row["ip_address"]
+        req_5m.append(int(((df["ts"] >= start_5) & (df["ts"] <= row["ts"]) & mask_ip).sum()))
+        req_60m.append(int(((df["ts"] >= start_60) & (df["ts"] <= row["ts"]) & mask_ip).sum()))
+        try:
+            is_public.append(0 if ipaddress.ip_address(row["ip_address"]).is_private else 1)
+        except ValueError:
+            is_public.append(1)
+
+    df["requests_5m"] = req_5m
+    df["requests_60m"] = req_60m
+    df["is_public_ip"] = is_public
+    features = df[[
+        "access_hour",
+        "requests_5m",
+        "requests_60m",
+        "is_public_ip",
+        "risk_score",
+    ]].fillna(0)
+    return df, features
+
+
+def detect_access_anomalies(conn, new_access_count=0):
+    events = []
+    access_df = pd.read_sql_query("SELECT * FROM access_logs", conn)
+    if access_df.empty or new_access_count <= 0:
+        return events
+
+    access_df = access_df.sort_values("timestamp")
+    if len(access_df) < 20:
+        return events
+
+    df, features = _access_features(access_df)
+    model = IsolationForest(n_estimators=200, contamination=0.1, random_state=42)
+    model.fit(features)
+
+    recent = df.tail(new_access_count)
+    recent_features = features.tail(new_access_count)
+    scores = model.decision_function(recent_features)
+    preds = model.predict(recent_features)
+
+    for i, row in recent.iterrows():
+        pos = recent.index.get_loc(i)
+        anomaly_score = float(-scores[pos])
+        is_anomaly = int(preds[pos]) == -1
+        if is_anomaly or row["risk_score"] >= 70:
+            conn.execute(
+                "INSERT INTO anomalies (timestamp, source, severity, anomaly_score, description) VALUES (?, ?, ?, ?, ?)",
+                (
+                    row["timestamp"],
+                    "access",
+                    "high" if is_anomaly else "medium",
+                    anomaly_score,
+                    "Suspicious access pattern detected",
+                ),
+            )
+            conn.execute(
+                "INSERT INTO alerts (timestamp, alert_message, status) VALUES (?, ?, ?)",
+                (
+                    row["timestamp"],
+                    f"Suspicious access detected from {row['ip_address']}",
+                    "active",
+                ),
+            )
+            events.append(
+                {
+                    "type": "SUSPICIOUS_ACCESS",
+                    "message": "Suspicious access detected",
+                    "severity": "high",
+                    "timestamp": row["timestamp"],
+                    "ip": row["ip_address"],
+                    "endpoint": row["endpoint"],
+                    "device": row["user_agent"],
+                    "location": row["location"],
+                    "risk_score": row["risk_score"],
+                }
+            )
     return events
