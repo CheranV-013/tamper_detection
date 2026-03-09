@@ -5,4 +5,4 @@ eventlet
 gunicorn
 numpy
 scikit-learn
-pandas
+pandas==2.2.2

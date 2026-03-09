@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 import ipaddress
 import numpy as np
-import pandas as pd
-from sklearn.ensemble import IsolationForest
+def detect_anomalies(data):
+    import pandas as pd
+    from sklearn.ensemble import IsolationForest
 
 UNUSUAL_HOURS = set([0, 1, 2, 3, 4, 5])
 
