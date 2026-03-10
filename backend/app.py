@@ -76,9 +76,10 @@ def compute_risk_score(conn, ip, user_agent, endpoint, now_ts):
 
     return max(0, min(100, score))
 
-
 @app.before_request
 def log_access():
+    if request.path == "/":
+        return
 
     if request.path.startswith("/socket.io"):
         return
