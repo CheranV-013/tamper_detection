@@ -22,7 +22,11 @@ CORS(app, resources={
         ]
     }
 })
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",
+    async_mode="eventlet"
+)
 
 init_db()
 @app.route("/")
