@@ -13,7 +13,15 @@ from backend.iot_simulator import generate_iot_events
 from backend.anomaly_model import detect_anomalies, detect_access_anomalies, UNUSUAL_HOURS
 
 app = Flask(__name__)
-CORS(app)
+from flask_cors import CORS
+
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://tamper-detection.vercel.app"
+        ]
+    }
+})
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 init_db()
