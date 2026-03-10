@@ -8,8 +8,8 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 
 from backend.database import init_db, get_conn
-from log_generator import generate_logs
-from iot_simulator import generate_iot_events
+from backend.log_generator import generate_logs
+from backend.iot_simulator import generate_iot_events
 from backend.anomaly_model import detect_anomalies, detect_access_anomalies, UNUSUAL_HOURS
 
 app = Flask(__name__)
