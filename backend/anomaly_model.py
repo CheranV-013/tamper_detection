@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import ipaddress
 import numpy as np
+import pandas as pd
 def detect_anomalies(data):
     from sklearn.ensemble import IsolationForest
 
