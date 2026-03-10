@@ -18,8 +18,8 @@ import IoTTable from "./tables/IoTTable.jsx";
 import AccessLogsTable from "./tables/AccessLogsTable.jsx";
 import AnomalyExplanation from "./components/AnomalyExplanation.jsx";
 
-const API_BASE = "http://127.0.0.1:5001/api";
-const SOCKET_URL = "http://127.0.0.1:5001";
+const API_BASE = "https://tamper-detection-2.onrender.com/api";
+const SOCKET_URL = "https://tamper-detection-2.onrender.com";
 
 export default function App() {
   const [summary, setSummary] = useState({
@@ -94,7 +94,9 @@ export default function App() {
     fetchAll();
     fetch(`${API_BASE}/dashboard-access`).catch(() => {});
 
-    const socket = io(SOCKET_URL);
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"]
+    });
 
     socket.on("security_event", event => {
       setSecurityEvents(prev => [event, ...prev].slice(0, 30));
