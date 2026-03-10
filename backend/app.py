@@ -17,6 +17,9 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 init_db()
+@app.route("/")
+def home():
+    return {"message": "AI IoT Tamper Detection API is running"}
 
 connected_users = 0
 
