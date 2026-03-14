@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "chart.js": "^4.4.1",
+    "cors": "^2.8.6",
     "lucide-react": "^0.372.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
