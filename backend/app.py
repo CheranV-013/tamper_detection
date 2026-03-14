@@ -13,20 +13,22 @@ from backend.iot_simulator import generate_iot_events
 from backend.anomaly_model import detect_anomalies, detect_access_anomalies, UNUSUAL_HOURS
 
 app = Flask(__name__)
-from flask_cors import CORS
 
-CORS(app, resources={
-    r"/*": {
-        "origins": [
-            "https://tamper-detection.vercel.app"
-        ]
-    }
-})
+CORS(app)
+
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode="eventlet"
+    async_mode="eventlet",
+    ping_timeout=60,
+    ping_interval=25
 )
+
+
+@app.route("/ping")
+def ping():
+    return {"status": "alive"}
+
 
 init_db()
 @app.route("/")
@@ -90,10 +92,17 @@ def compute_risk_score(conn, ip, user_agent, endpoint, now_ts):
 
 @app.before_request
 def log_access():
-    if request.path == "/":
+
+    # skip API calls to prevent heavy logging
+    if request.path.startswith("/api"):
         return
 
+    # skip websocket
     if request.path.startswith("/socket.io"):
+        return
+
+    # skip root
+    if request.path == "/":
         return
 
     now_ts = datetime.utcnow()
@@ -515,4 +524,4 @@ import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    socketio.run(app, host="0.0.0.0", port=port)
