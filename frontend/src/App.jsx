@@ -18,8 +18,19 @@ import IoTTable from "./tables/IoTTable.jsx";
 import AccessLogsTable from "./tables/AccessLogsTable.jsx";
 import AnomalyExplanation from "./components/AnomalyExplanation.jsx";
 
-const API_BASE = "https://tamper-detection-2.onrender.com/api";
-const SOCKET_URL = "https://tamper-detection-2.onrender.com";
+
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+const SOCKET_URL = import.meta.env.VITE_API_URL;
+/* SAFE FETCH HELPER */
+const safeFetch = async (url) => {
+  try {
+    const res = await fetch(url);
+    return await res.json();
+  } catch (err) {
+    console.error("API error:", url, err);
+    return [];
+  }
+};
 
 export default function App() {
   const [summary, setSummary] = useState({
@@ -48,54 +59,71 @@ export default function App() {
   const [locations, setLocations] = useState([]);
 
   const fetchAll = async () => {
-    const [s, a, l, i, ac, ic, tc, st, an, al, ah, ti, as, loc] = await Promise.all([
-      fetch(`${API_BASE}/summary`).then(r => r.json()),
-      fetch(`${API_BASE}/alerts`).then(r => r.json()),
-      fetch(`${API_BASE}/logs?limit=12`).then(r => r.json()),
-      fetch(`${API_BASE}/iot?limit=12`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/activity`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/iot`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/tamper`).then(r => r.json()),
-      fetch(`${API_BASE}/system-status`).then(r => r.json()),
-      fetch(`${API_BASE}/anomalies?limit=5`).then(r => r.json()),
-      fetch(`${API_BASE}/access-logs?limit=10`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/access-hour`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/access-top-ips`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/access-suspicious`).then(r => r.json()),
-      fetch(`${API_BASE}/charts/access-locations`).then(r => r.json())
+    console.log("Fetching from:", API_BASE);
+
+    const [
+      s, a, l, i,
+      ac, ic, tc,
+      st, an,
+      al, ah,
+      ti, as, loc
+    ] = await Promise.all([
+      safeFetch(`${API_BASE}/summary`),
+      safeFetch(`${API_BASE}/alerts`),
+      safeFetch(`${API_BASE}/logs?limit=12`),
+      safeFetch(`${API_BASE}/iot?limit=12`),
+      safeFetch(`${API_BASE}/charts/activity`),
+      safeFetch(`${API_BASE}/charts/iot`),
+      safeFetch(`${API_BASE}/charts/tamper`),
+      safeFetch(`${API_BASE}/system-status`),
+      safeFetch(`${API_BASE}/anomalies?limit=5`),
+      safeFetch(`${API_BASE}/access-logs?limit=10`),
+      safeFetch(`${API_BASE}/charts/access-hour`),
+      safeFetch(`${API_BASE}/charts/access-top-ips`),
+      safeFetch(`${API_BASE}/charts/access-suspicious`),
+      safeFetch(`${API_BASE}/charts/access-locations`)
     ]);
 
-    setSummary(s);
-    setAlerts(a);
-    setLogs(l);
-    setIot(i);
-    setActivity(ac);
-    setIotChart(ic);
-    setTamperChart(tc);
-    setStatus(st);
-    setAnomalies(an);
-    setAccessLogs(al);
-    setAccessHour(ah);
-    setTopIps(ti);
-    setAccessSuspicious(as);
-    setLocations(loc);
-    setUserCount(s.connected_users || 0);
+    setSummary(s || {});
+    setAlerts(a || []);
+    setLogs(l || []);
+    setIot(i || []);
+    setActivity(ac || []);
+    setIotChart(ic || []);
+    setTamperChart(tc || []);
+    setStatus(st || {});
+    setAnomalies(an || []);
+    setAccessLogs(al || []);
+    setAccessHour(ah || []);
+    setTopIps(ti || []);
+    setAccessSuspicious(as || []);
+    setLocations(loc || []);
+    setUserCount(s?.connected_users || 0);
   };
 
   const generateData = async () => {
-    await fetch(`${API_BASE}/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ logs: 25, iot: 25 })
-    });
+    try {
+      await fetch(`${API_BASE}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logs: 25, iot: 25 })
+      });
+    } catch (err) {
+      console.error("Generate error:", err);
+    }
   };
 
   useEffect(() => {
     fetchAll();
+
     fetch(`${API_BASE}/dashboard-access`).catch(() => {});
 
     const socket = io(SOCKET_URL, {
       transports: ["websocket"]
+    });
+
+    socket.on("connect", () => {
+      console.log("Socket connected");
     });
 
     socket.on("security_event", event => {
@@ -130,6 +158,7 @@ export default function App() {
             </p>
           </div>
         </div>
+
         <div className="flex items-center gap-3">
           <button
             onClick={generateData}
@@ -137,6 +166,7 @@ export default function App() {
           >
             Generate Live Data
           </button>
+
           <div className="px-3 py-2 rounded-lg bg-muted/70 text-xs text-slate-200">
             Connected users: {userCount}
           </div>
@@ -146,37 +176,23 @@ export default function App() {
       <main className="px-8 py-8 space-y-6">
         <SummaryCards
           items={[
-            {
-              label: "Total Logs Processed",
-              value: summary.total_logs,
-              icon: Activity
-            },
-            {
-              label: "Total IoT Events",
-              value: summary.total_iot,
-              icon: Cpu
-            },
-            {
-              label: "Anomalies Detected",
-              value: summary.anomalies,
-              icon: AlertTriangle
-            },
-            {
-              label: "Active Tamper Alerts",
-              value: summary.active_alerts,
-              icon: ShieldCheck
-            }
+            { label: "Total Logs Processed", value: summary.total_logs, icon: Activity },
+            { label: "Total IoT Events", value: summary.total_iot, icon: Cpu },
+            { label: "Anomalies Detected", value: summary.anomalies, icon: AlertTriangle },
+            { label: "Active Tamper Alerts", value: summary.active_alerts, icon: ShieldCheck }
           ]}
         />
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 space-y-6">
             <ActivityChart data={activity} />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <IoTChart data={iotChart} />
               <TamperChart data={tamperChart} />
             </div>
           </div>
+
           <div className="space-y-6">
             <AlertPanel alerts={alerts} />
             <ThreatMonitor events={threatEvents} />
