@@ -18,9 +18,11 @@ import IoTTable from "./tables/IoTTable.jsx";
 import AccessLogsTable from "./tables/AccessLogsTable.jsx";
 import AnomalyExplanation from "./components/AnomalyExplanation.jsx";
 
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "https://tamper-detection-2.onrender.com";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
-const SOCKET_URL = import.meta.env.VITE_API_URL;
+const API_BASE = `${BASE_URL}/api`;
+const SOCKET_URL = BASE_URL;
 /* SAFE FETCH HELPER */
 const safeFetch = async (url) => {
   try {
