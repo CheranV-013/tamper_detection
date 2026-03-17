@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { API_BASE, safeFetch, postJson } from "./lib/api.js";
+import { createSocket } from "./lib/socket.js";
 import { ShieldCheck, Activity, AlertTriangle, Cpu } from "lucide-react";
 import SummaryCards from "./components/SummaryCards.jsx";
 import AlertPanel from "./alerts/AlertPanel.jsx";
@@ -18,21 +19,8 @@ import IoTTable from "./tables/IoTTable.jsx";
 import AccessLogsTable from "./tables/AccessLogsTable.jsx";
 import AnomalyExplanation from "./components/AnomalyExplanation.jsx";
 
-const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://tamper-detection-2.onrender.com";
-
-const API_BASE = `${BASE_URL}/api`;
-const SOCKET_URL = BASE_URL;
-/* SAFE FETCH HELPER */
-const safeFetch = async (url) => {
-  try {
-    const res = await fetch(url);
-    return await res.json();
-  } catch (err) {
-    console.error("API error:", url, err);
-    return [];
-  }
-};
+const DEFAULT_LIST = [];
+const DEFAULT_OBJECT = {};
 
 export default function App() {
   const [summary, setSummary] = useState({
@@ -61,8 +49,6 @@ export default function App() {
   const [locations, setLocations] = useState([]);
 
   const fetchAll = async () => {
-    console.log("Fetching from:", API_BASE);
-
     const [
       s, a, l, i,
       ac, ic, tc,
@@ -70,20 +56,20 @@ export default function App() {
       al, ah,
       ti, as, loc
     ] = await Promise.all([
-      safeFetch(`${API_BASE}/summary`),
-      safeFetch(`${API_BASE}/alerts`),
-      safeFetch(`${API_BASE}/logs?limit=12`),
-      safeFetch(`${API_BASE}/iot?limit=12`),
-      safeFetch(`${API_BASE}/charts/activity`),
-      safeFetch(`${API_BASE}/charts/iot`),
-      safeFetch(`${API_BASE}/charts/tamper`),
-      safeFetch(`${API_BASE}/system-status`),
-      safeFetch(`${API_BASE}/anomalies?limit=5`),
-      safeFetch(`${API_BASE}/access-logs?limit=10`),
-      safeFetch(`${API_BASE}/charts/access-hour`),
-      safeFetch(`${API_BASE}/charts/access-top-ips`),
-      safeFetch(`${API_BASE}/charts/access-suspicious`),
-      safeFetch(`${API_BASE}/charts/access-locations`)
+      safeFetch(`${API_BASE}/summary`, DEFAULT_OBJECT),
+      safeFetch(`${API_BASE}/alerts`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/logs?limit=12`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/iot?limit=12`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/activity`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/iot`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/tamper`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/system-status`, DEFAULT_OBJECT),
+      safeFetch(`${API_BASE}/anomalies?limit=5`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/access-logs?limit=10`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/access-hour`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/access-top-ips`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/access-suspicious`, DEFAULT_LIST),
+      safeFetch(`${API_BASE}/charts/access-locations`, DEFAULT_LIST)
     ]);
 
     setSummary(s || {});
@@ -105,11 +91,7 @@ export default function App() {
 
   const generateData = async () => {
     try {
-      await fetch(`${API_BASE}/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logs: 25, iot: 25 })
-      });
+      await postJson("/generate", { logs: 25, iot: 25 });
     } catch (err) {
       console.error("Generate error:", err);
     }
@@ -118,14 +100,15 @@ export default function App() {
   useEffect(() => {
     fetchAll();
 
-    fetch(`${API_BASE}/dashboard-access`).catch(() => {});
+    safeFetch(`${API_BASE}/dashboard-access`, DEFAULT_OBJECT);
 
-    const socket = io(SOCKET_URL, {
-      transports: ["websocket"]
-    });
+    const socket = createSocket();
 
     socket.on("connect", () => {
       console.log("Socket connected");
+    });
+    socket.on("connect_error", (err) => {
+      console.error("Socket error:", err);
     });
 
     socket.on("security_event", event => {
