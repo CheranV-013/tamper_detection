@@ -1,5 +1,5 @@
 const rawBase =
-  import.meta.env.VITE_API_BASE_URL?.trim() ||
+  import.meta.env.VITE_API_BASE?.trim() ||
   "https://tamper-detection-2.onrender.com";
 
 const BASE_URL = rawBase.replace(/\/+$/, "");
