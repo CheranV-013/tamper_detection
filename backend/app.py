@@ -14,7 +14,11 @@ from backend.anomaly_model import detect_anomalies, detect_access_anomalies, UNU
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "*"}},
+    supports_credentials=True
+)
 
 socketio = SocketIO(
     app,
