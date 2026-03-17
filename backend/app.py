@@ -12,6 +12,10 @@ from backend.log_generator import generate_logs
 from backend.iot_simulator import generate_iot_events
 from backend.anomaly_model import detect_anomalies, detect_access_anomalies, UNUSUAL_HOURS
 
+
+@app.route("/api/dashboard-access")
+def dashboard_access():
+    return {"status": "ok"}
 app = Flask(__name__)
 
 CORS(
