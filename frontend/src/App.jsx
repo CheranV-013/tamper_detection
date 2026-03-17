@@ -23,6 +23,7 @@ const DEFAULT_LIST = [];
 const DEFAULT_OBJECT = {};
 
 export default function App() {
+
   const [summary, setSummary] = useState({
     total_logs: 0,
     total_iot: 0,
@@ -49,6 +50,7 @@ export default function App() {
   const [locations, setLocations] = useState([]);
 
   const fetchAll = async () => {
+
     const [
       s, a, l, i,
       ac, ic, tc,
@@ -56,20 +58,22 @@ export default function App() {
       al, ah,
       ti, as, loc
     ] = await Promise.all([
-      safeFetch(`${API_BASE}/summary`, DEFAULT_OBJECT),
-      safeFetch(`${API_BASE}/alerts`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/logs?limit=12`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/iot?limit=12`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/activity`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/iot`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/tamper`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/system-status`, DEFAULT_OBJECT),
-      safeFetch(`${API_BASE}/anomalies?limit=5`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/access-logs?limit=10`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/access-hour`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/access-top-ips`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/access-suspicious`, DEFAULT_LIST),
-      safeFetch(`${API_BASE}/charts/access-locations`, DEFAULT_LIST)
+
+      safeFetch("/summary", DEFAULT_OBJECT),
+      safeFetch("/alerts", DEFAULT_LIST),
+      safeFetch("/logs?limit=12", DEFAULT_LIST),
+      safeFetch("/iot?limit=12", DEFAULT_LIST),
+      safeFetch("/charts/activity", DEFAULT_LIST),
+      safeFetch("/charts/iot", DEFAULT_LIST),
+      safeFetch("/charts/tamper", DEFAULT_LIST),
+      safeFetch("/system-status", DEFAULT_OBJECT),
+      safeFetch("/anomalies?limit=5", DEFAULT_LIST),
+      safeFetch("/access-logs?limit=10", DEFAULT_LIST),
+      safeFetch("/charts/access-hour", DEFAULT_LIST),
+      safeFetch("/charts/access-top-ips", DEFAULT_LIST),
+      safeFetch("/charts/access-suspicious", DEFAULT_LIST),
+      safeFetch("/charts/access-locations", DEFAULT_LIST)
+
     ]);
 
     setSummary(s || {});
@@ -98,15 +102,17 @@ export default function App() {
   };
 
   useEffect(() => {
+
     fetchAll();
 
-    safeFetch(`${API_BASE}/dashboard-access`, DEFAULT_OBJECT);
+    safeFetch("/dashboard-access", DEFAULT_OBJECT);
 
     const socket = createSocket();
 
     socket.on("connect", () => {
       console.log("Socket connected");
     });
+
     socket.on("connect_error", (err) => {
       console.error("Socket error:", err);
     });
@@ -121,6 +127,7 @@ export default function App() {
     });
 
     return () => socket.disconnect();
+
   }, []);
 
   const threatEvents = securityEvents.filter(ev =>
@@ -129,15 +136,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-slate-100">
+
       <header className="px-8 py-6 flex items-center justify-between border-b border-slate-800/60">
+
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-xl bg-accent/15 text-accent shadow-glow">
             <ShieldCheck />
           </div>
+
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
               AI Powered Container Tamper Detection SOC Dashboard
             </h1>
+
             <p className="text-slate-400 text-sm">
               SOC Dashboard • Real-time anomaly detection • Container security intelligence
             </p>
@@ -145,6 +156,7 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3">
+
           <button
             onClick={generateData}
             className="px-4 py-2 bg-accent text-white rounded-lg shadow-glow hover:bg-blue-500 transition"
@@ -155,10 +167,12 @@ export default function App() {
           <div className="px-3 py-2 rounded-lg bg-muted/70 text-xs text-slate-200">
             Connected users: {userCount}
           </div>
+
         </div>
       </header>
 
       <main className="px-8 py-8 space-y-6">
+
         <SummaryCards
           items={[
             { label: "Total Logs Processed", value: summary.total_logs, icon: Activity },
@@ -169,13 +183,16 @@ export default function App() {
         />
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
           <div className="xl:col-span-2 space-y-6">
+
             <ActivityChart data={activity} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <IoTChart data={iotChart} />
               <TamperChart data={tamperChart} />
             </div>
+
           </div>
 
           <div className="space-y-6">
@@ -185,6 +202,7 @@ export default function App() {
             <StatusPanel status={status} />
             <AnomalyExplanation anomalies={anomalies} />
           </div>
+
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -202,6 +220,7 @@ export default function App() {
           <LogsTable rows={logs} />
           <IoTTable rows={iot} />
         </div>
+
       </main>
     </div>
   );
