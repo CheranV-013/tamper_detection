@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { API_BASE, safeFetch, postJson } from "./lib/api.js";
+import { safeFetch, postJson } from "./lib/api.js";
 import { createSocket } from "./lib/socket.js";
 import { ShieldCheck, Activity, AlertTriangle, Cpu } from "lucide-react";
+
 import SummaryCards from "./components/SummaryCards.jsx";
 import AlertPanel from "./alerts/AlertPanel.jsx";
 import LiveEventStream from "./alerts/LiveEventStream.jsx";
 import ThreatMonitor from "./alerts/ThreatMonitor.jsx";
+
 import ActivityChart from "./charts/ActivityChart.jsx";
 import IoTChart from "./charts/IoTChart.jsx";
 import TamperChart from "./charts/TamperChart.jsx";
 import AccessHourChart from "./charts/AccessHourChart.jsx";
 import TopIpChart from "./charts/TopIpChart.jsx";
 import SuspiciousAccessChart from "./charts/SuspiciousAccessChart.jsx";
+
 import StatusPanel from "./components/StatusPanel.jsx";
 import GeoDistribution from "./components/GeoDistribution.jsx";
 import LogsTable from "./tables/LogsTable.jsx";
@@ -59,20 +62,20 @@ export default function App() {
       ti, as, loc
     ] = await Promise.all([
 
-      safeFetch("/summary", DEFAULT_OBJECT),
-      safeFetch("/alerts", DEFAULT_LIST),
-      safeFetch("/logs?limit=12", DEFAULT_LIST),
-      safeFetch("/iot?limit=12", DEFAULT_LIST),
-      safeFetch("/charts/activity", DEFAULT_LIST),
-      safeFetch("/charts/iot", DEFAULT_LIST),
-      safeFetch("/charts/tamper", DEFAULT_LIST),
-      safeFetch("/system-status", DEFAULT_OBJECT),
-      safeFetch("/anomalies?limit=5", DEFAULT_LIST),
-      safeFetch("/access-logs?limit=10", DEFAULT_LIST),
-      safeFetch("/charts/access-hour", DEFAULT_LIST),
-      safeFetch("/charts/access-top-ips", DEFAULT_LIST),
-      safeFetch("/charts/access-suspicious", DEFAULT_LIST),
-      safeFetch("/charts/access-locations", DEFAULT_LIST)
+      safeFetch("/api/summary", DEFAULT_OBJECT),
+      safeFetch("/api/alerts", DEFAULT_LIST),
+      safeFetch("/api/logs?limit=12", DEFAULT_LIST),
+      safeFetch("/api/iot?limit=12", DEFAULT_LIST),
+      safeFetch("/api/charts/activity", DEFAULT_LIST),
+      safeFetch("/api/charts/iot", DEFAULT_LIST),
+      safeFetch("/api/charts/tamper", DEFAULT_LIST),
+      safeFetch("/api/system-status", DEFAULT_OBJECT),
+      safeFetch("/api/anomalies?limit=5", DEFAULT_LIST),
+      safeFetch("/api/access-logs?limit=10", DEFAULT_LIST),
+      safeFetch("/api/charts/access-hour", DEFAULT_LIST),
+      safeFetch("/api/charts/access-top-ips", DEFAULT_LIST),
+      safeFetch("/api/charts/access-suspicious", DEFAULT_LIST),
+      safeFetch("/api/charts/access-locations", DEFAULT_LIST)
 
     ]);
 
@@ -95,7 +98,7 @@ export default function App() {
 
   const generateData = async () => {
     try {
-      await postJson("/generate", { logs: 25, iot: 25 });
+      await postJson("/api/generate", { logs: 25, iot: 25 });
     } catch (err) {
       console.error("Generate error:", err);
     }
@@ -105,7 +108,7 @@ export default function App() {
 
     fetchAll();
 
-    safeFetch("/dashboard-access", DEFAULT_OBJECT);
+    safeFetch("/api/dashboard-access", DEFAULT_OBJECT);
 
     const socket = createSocket();
 
